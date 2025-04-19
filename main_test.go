@@ -3,6 +3,7 @@ package main
 import (
 	"blo/bloom"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"testing"
@@ -12,7 +13,7 @@ import (
 
 const (
 	mainFilterPath = "bloomfilter.dat"
-	defaultN       = 1_00_000_000
+	defaultN       = 1_000_000_000
 )
 
 func BenchmarkBloomFromMainFile(b *testing.B) {
@@ -23,12 +24,18 @@ func BenchmarkBloomFromMainFile(b *testing.B) {
 	filter, cleanup, err := bloom.LoadFromFile(mainFilterPath)
 	require.NoError(b, err)
 	defer cleanup()
-
+	nbFound := 0.0
+	count := 0.0
 	b.ResetTimer()
 	for b.Loop() {
+		count++
 		key := []byte(fmt.Sprintf("key-%d", rand.Intn(defaultN)))
-		filter.Test(key)
+		found := filter.Test(key)
+		if found {
+			nbFound++
+		}
 	}
+	log.Printf("found %f on %f (%f)", nbFound, count, (nbFound / count * 100))
 }
 
 func BenchmarkBloomParallelTest(b *testing.B) {

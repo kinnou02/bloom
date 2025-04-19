@@ -3,6 +3,7 @@ package main_test
 import (
 	"encoding/gob"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"testing"
@@ -67,9 +68,16 @@ func BenchmarkBitsetAndBloomMemory(b *testing.B) {
 		}
 	}
 
+	nbFound := 0.0
+	count := 0.0
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
+		count++
 		key := []byte(fmt.Sprintf("key-%d", rand.Intn(1_000_000_000)))
-		filter.Test(key)
+		found := filter.Test(key)
+		if found {
+			nbFound++
+		}
 	}
+	log.Printf("found %f on %f (%f)", nbFound, count, (nbFound / count * 100))
 }

@@ -1,7 +1,7 @@
 package bloom_test
 
 import (
-	"bloomfilter/bloom"
+	"blo/bloom"
 	"fmt"
 	"math"
 	"os"
@@ -17,7 +17,7 @@ const (
 	testTmpFile = "test_filter.bloom"
 )
 
-func getTestFilter(t *testing.T) *bloom.BloomFilter {
+func getTestFilter() *bloom.BloomFilter {
 	m := uint(math.Ceil(-1 * float64(testN) * math.Log(testFpRate) / (math.Ln2 * math.Ln2)))
 	k := uint(math.Ceil((float64(m) / float64(testN)) * math.Ln2))
 	filter := bloom.New(m, k)
@@ -29,14 +29,14 @@ func getTestFilter(t *testing.T) *bloom.BloomFilter {
 }
 
 func TestAddAndTest(t *testing.T) {
-	filter := getTestFilter(t)
+	filter := getTestFilter()
 
 	assert.True(t, filter.Test([]byte("id-42")))
 	assert.False(t, filter.Test([]byte("unknown-key")))
 }
 
 func TestSaveAndLoad(t *testing.T) {
-	filter := getTestFilter(t)
+	filter := getTestFilter()
 
 	err := bloom.SaveToFile(testTmpFile, filter)
 	assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestSaveAndLoad(t *testing.T) {
 }
 
 func TestFalsePositiveRate(t *testing.T) {
-	filter := getTestFilter(t)
+	filter := getTestFilter()
 
 	fpCount := 0
 	total := 50_000
@@ -67,7 +67,7 @@ func TestFalsePositiveRate(t *testing.T) {
 }
 
 func BenchmarkBloomMmapTest(b *testing.B) {
-	filter := getTestFilter(b)
+	filter := getTestFilter()
 
 	// Save then load using mmap
 	tmp := filepath.Join(os.TempDir(), "bench_filter.bloom")
