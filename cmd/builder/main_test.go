@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	mainFilterPath = "bloomfilter.dat"
+	mainFilterPath = "../../bloomfilter.dat"
 	defaultN       = 1_000_000_000
 )
 
@@ -26,16 +26,25 @@ func BenchmarkBloomFromMainFile(b *testing.B) {
 	defer cleanup()
 	nbFound := 0.0
 	count := 0.0
+	ko := 0
 	b.ResetTimer()
 	for b.Loop() {
 		count++
-		key := []byte(fmt.Sprintf("key-%d", rand.Intn(defaultN)))
+		v := rand.Intn(defaultN)
+		key := []byte(fmt.Sprintf("key-%d", v))
 		found := filter.Test(key)
 		if found {
 			nbFound++
 		}
+		shouldFound := false
+		if v < 500_000_000 {
+			shouldFound = true
+		}
+		if shouldFound != found {
+			ko++
+		}
 	}
-	log.Printf("found %f on %f (%f)", nbFound, count, (nbFound / count * 100))
+	log.Printf("found %f on %f (%f). KO: %d", nbFound, count, (nbFound / count * 100), ko)
 }
 
 func BenchmarkBloomParallelTest(b *testing.B) {
