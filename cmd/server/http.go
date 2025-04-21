@@ -4,14 +4,14 @@ import (
 	"blo/bloom"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // for pprof
 	"sync"
 )
 
-const filterPath = "bloomfilter.dat"
+const filterPath = "blockedbloomfilter.dat"
 
 var (
-	filter  *bloom.BloomFilter
-	cleanup func()
+	filter  *bloom.BlockedBloomFilter
 	bufPool = sync.Pool{
 		New: func() interface{} {
 			return make([]byte, 0, 256)
@@ -21,11 +21,11 @@ var (
 
 func Start() {
 	var err error
-	filter, cleanup, err = bloom.LoadFromFile(filterPath)
+	filter, err = bloom.LoadBlockedBloomFilter(filterPath)
 	if err != nil {
 		log.Fatalf("failed to load bloom filter: %v", err)
 	}
-	defer cleanup()
+	defer filter.Close()
 
 	http.HandleFunc("/check", func(w http.ResponseWriter, r *http.Request) {
 		key := r.URL.Query().Get("key")
