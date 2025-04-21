@@ -11,7 +11,7 @@ import (
 
 const (
 	numElements  = 500_000_000
-	falsePosRate = 0.001
+	falsePosRate = 0.0001
 	filterFile   = "bloomfilter.dat"
 )
 

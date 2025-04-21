@@ -6,6 +6,9 @@ import (
 	"net/http"
 	_ "net/http/pprof" // for pprof
 	"sync"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 const filterPath = "blockedbloomfilter.dat"
@@ -19,7 +22,7 @@ var (
 	}
 )
 
-func Start() {
+func main() {
 	var err error
 	filter, err = bloom.LoadBlockedBloomFilter(filterPath)
 	if err != nil {
@@ -47,6 +50,11 @@ func Start() {
 		}
 	})
 
-	log.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	h2s := &http2.Server{}
+	serverH2c := &http.Server{
+		Addr:    ":8081",
+		Handler: h2c.NewHandler(http.DefaultServeMux, h2s),
+	}
+	log.Println("Server h2c started on :8081")
+	log.Fatal(serverH2c.ListenAndServe())
 }

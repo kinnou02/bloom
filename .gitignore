@@ -1,0 +1,4 @@
+*.dat
+/builder
+/builder-blocked
+/server
