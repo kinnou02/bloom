@@ -27,8 +27,8 @@ func BenchmarkBloomFromMainFile(b *testing.B) {
 	nbFound := 0.0
 	count := 0.0
 	b.ResetTimer()
-	ko := 0.0
-	maybeKO := 0.0
+	FP := 0.0
+	shouldBeKO := 0.0
 	for b.Loop() {
 		count++
 		v := rand.Intn(defaultN)
@@ -37,17 +37,14 @@ func BenchmarkBloomFromMainFile(b *testing.B) {
 		if found {
 			nbFound++
 		}
-		if v < 500_000_000 {
-			if !found {
-				ko++
-			}
-		} else {
+		if v > 500_000_000 {
+			shouldBeKO++
 			if found {
-				maybeKO++
+				FP++
 			}
 		}
 	}
-	log.Printf("found %f on %f (%f). KO: %f, maybeKO: %f (fp: %f)", nbFound, count, (nbFound / count * 100), ko, maybeKO, maybeKO/count)
+	log.Printf("found %f on %f (%f)., fp: %f (fp rate: %f)", nbFound, count, (nbFound / count * 100), FP, FP/shouldBeKO)
 }
 
 func BenchmarkBloomParallelTest(b *testing.B) {
