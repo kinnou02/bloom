@@ -52,9 +52,9 @@ func main() {
 
 	h2s := &http2.Server{}
 	serverH2c := &http.Server{
-		Addr:    ":8081",
+		Addr:    ":8080",
 		Handler: h2c.NewHandler(http.DefaultServeMux, h2s),
 	}
-	log.Println("Server h2c started on :8081")
+	log.Println("Server h2c started on :8080")
 	log.Fatal(serverH2c.ListenAndServe())
 }
