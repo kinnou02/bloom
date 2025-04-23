@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	blockSize   = 64     // 64 bytes = 512 bits
-	headerSize  = 16     // magic(4) + version(4) + k(4) + blocks(4)
-	magicBytes  = "BBF1" // 4 bytes identifier
-	fileVersion = 1
+	blockSize     = 256 // 256 bytes = 2048 bits
+	blockSizeBits = 8 * blockSize
+	headerSize    = 16     // magic(4) + version(4) + k(4) + blocks(4)
+	magicBytes    = "BBF1" // 4 bytes identifier
+	fileVersion   = 1
 )
 
 type BlockedBloomFilter struct {
@@ -104,7 +105,7 @@ func (bf *BlockedBloomFilter) Add(item []byte) {
 	offset := headerSize + block*blockSize
 
 	for i := uint32(0); i < bf.k; i++ {
-		bit := (h1 + uint64(i)*h2) % 512
+		bit := (h1 + uint64(i)*h2) % blockSizeBits
 		byteIndex := int(bit / 8)
 		bitOffset := bit % 8
 		bf.data[offset+byteIndex] |= 1 << bitOffset
@@ -119,7 +120,7 @@ func (bf *BlockedBloomFilter) Test(item []byte) bool {
 	offset := headerSize + block*blockSize
 
 	for i := uint32(0); i < bf.k; i++ {
-		bit := (h1 + uint64(i)*h2) % 512
+		bit := (h1 + uint64(i)*h2) % blockSizeBits
 		byteIndex := int(bit / 8)
 		bitOffset := bit % 8
 		if (bf.data[offset+byteIndex] & (1 << bitOffset)) == 0 {
