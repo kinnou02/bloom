@@ -26,6 +26,13 @@ type BlockedBloomFilter struct {
 }
 
 func CreateBlockedBloomFilter(path string, nElements int, targetFP float64) (*BlockedBloomFilter, error) {
+	if nElements <= 100_000 {
+		// small filter have a very high false positive rate, so we fix a minimum
+		nElements = 100_000
+	} else {
+		// we increase our filter's size to 110%, to avoid false positive rate
+		nElements = int(float64(nElements) * 1.1)
+	}
 	bitsNeeded := int(math.Ceil(-1 * float64(nElements) * math.Log(targetFP) / (math.Ln2 * math.Ln2)))
 	nBlocks := uint32(math.Ceil(float64(bitsNeeded) / float64(blockSize*8)))
 	k := uint32(math.Ceil((float64(blockSize*8) / (float64(nElements) / float64(nBlocks))) * math.Ln2))
@@ -56,7 +63,7 @@ func CreateBlockedBloomFilter(path string, nElements int, targetFP float64) (*Bl
 		data:    data,
 		k:       k,
 		nBlocks: nBlocks,
-		hasher:  *NewHasher(),
+		hasher:  NewHasher(),
 	}, nil
 }
 
@@ -89,7 +96,7 @@ func LoadBlockedBloomFilter(path string) (*BlockedBloomFilter, error) {
 		data:    data,
 		k:       k,
 		nBlocks: nBlocks,
-		hasher:  *NewHasher(),
+		hasher:  NewHasher(),
 	}, nil
 }
 
@@ -98,8 +105,7 @@ func (bf *BlockedBloomFilter) getBlock(h1 uint64) int {
 }
 
 func (bf *BlockedBloomFilter) Add(item []byte) {
-	h := NewHasher()
-	h1, h2 := h.Sum64(item)
+	h1, h2 := bf.hasher.Sum64(item)
 
 	block := bf.getBlock(h1)
 	offset := headerSize + block*blockSize
@@ -113,8 +119,7 @@ func (bf *BlockedBloomFilter) Add(item []byte) {
 }
 
 func (bf *BlockedBloomFilter) Test(item []byte) bool {
-	h := NewHasher()
-	h1, h2 := h.Sum64(item)
+	h1, h2 := bf.hasher.Sum64(item)
 
 	block := bf.getBlock(h1)
 	offset := headerSize + block*blockSize

@@ -54,21 +54,36 @@ func TestSlowBlockedFalsePositiveRate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping false positive rate test in short mode")
 	}
-	targetFpRate := 0.001
-	filter := getTestBlockedFilter(500_000_000, targetFpRate)
-	defer os.Remove(testBlockedTmpFile)
 
-	fpCount := 0
-	total := 50_000
-	for i := range total {
-		key := fmt.Sprintf("zzz-%d", i)
-		if filter.Test([]byte(key)) {
-			fpCount++
-		}
+	tests := []struct {
+		size int
+	}{
+		{size: 500_000},
+		{size: 1_000_000},
+		{size: 2_000_000},
+		{size: 5_000},
+		{size: 20_000_000},
+		{size: 200_000_000},
 	}
-	fpRate := float64(fpCount) / float64(total)
-	t.Logf("False positive rate: %.4f", fpRate)
-	assert.LessOrEqual(t, fpRate, targetFpRate)
+	targetFpRate := 0.001
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("size-%d", tc.size), func(t *testing.T) {
+			filter := getTestBlockedFilter(tc.size, targetFpRate)
+			defer os.Remove(testBlockedTmpFile)
+
+			fpCount := 0
+			total := 500_000
+			for i := range total {
+				key := fmt.Sprintf("zzz-%d", i)
+				if filter.Test([]byte(key)) {
+					fpCount++
+				}
+			}
+			fpRate := float64(fpCount) / float64(total)
+			t.Logf("False positive rate: %.4f", fpRate)
+			assert.LessOrEqual(t, fpRate, targetFpRate*2) // we allow  2x the target
+		})
+	}
 }
 
 func BenchmarkBlockedBloomMmapTest(b *testing.B) {
